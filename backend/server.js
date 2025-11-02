@@ -8,6 +8,10 @@ const db = require('./config/db');
 const vehicleRoutes = require('./routes/vehicleRoutes');
 const zoneRoutes = require('./routes/zoneRoutes');
 const incomingVehicleRoutes = require('./routes/incomingVehicleRoutes');
+const authRoutes = require('./routes/authRoutes'); // auth
+const userRoutes = require('./routes/userRoutes');
+
+
 
 const app = express();
 const server = http.createServer(app);
@@ -34,9 +38,12 @@ app.use(express.json());
 })();
 
 // Routes
+app.use('/api/auth', authRoutes); //auth
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/zones', zoneRoutes);
 app.use('/api/incoming', incomingVehicleRoutes);
+app.use('/api/users', userRoutes);
+
 
 
 // WebSocket for real-time updates

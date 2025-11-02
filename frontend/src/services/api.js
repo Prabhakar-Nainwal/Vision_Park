@@ -9,7 +9,19 @@ const apiClient = axios.create({
   },
 });
 
-// Vehicle API endpoints (permanent logs)
+// ✅ Automatically attach token for authenticated requests
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+
+//
+// ---------------- VEHICLE API ----------------
+//
 export const vehicleAPI = {
   getAll: async (filters = {}) => {
     try {
@@ -40,12 +52,20 @@ export const vehicleAPI = {
       throw error;
     }
   },
+
   getTrafficAnalytics: async (type) => {
-    const res = await fetch(`http://localhost:5000/api/vehicles/analytics/traffic?type=${type}`);
-    return await res.json();
+    try {
+      const response = await apiClient.get(`/vehicles/analytics/traffic`, {
+        params: { type },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching traffic analytics:', error);
+      throw error;
+    }
   },
 
-    getUserInsights: async (params = {}) => {
+  getUserInsights: async (params = {}) => {
     try {
       const response = await apiClient.get('/vehicles/analytics/insights', { params });
       return response.data;
@@ -54,10 +74,11 @@ export const vehicleAPI = {
       throw error;
     }
   },
-
 };
 
-// Zone API endpoints
+//
+// ---------------- ZONE API ----------------
+//
 export const zoneAPI = {
   getAll: async () => {
     try {
@@ -110,13 +131,13 @@ export const zoneAPI = {
   },
 };
 
-// Incoming Vehicle API endpoints
+//
+// ---------------- INCOMING VEHICLE API ----------------
+//
 export const incomingVehicleAPI = {
   getUnprocessed: async (limit = 50) => {
     try {
-      const response = await apiClient.get('/incoming/unprocessed', {
-        params: { limit }
-      });
+      const response = await apiClient.get('/incoming/unprocessed', { params: { limit } });
       return response.data;
     } catch (error) {
       console.error('Error fetching incoming vehicles:', error);
@@ -143,9 +164,34 @@ export const incomingVehicleAPI = {
       throw error;
     }
   },
-
-
 };
 
+// ---------------- USER API ----------------
+export const userAPI = {
+  getProfile: async () => {
+    const res = await apiClient.get("/users/me");
+    return res.data;
+  },
+
+  updateProfile: async (data) => {
+    const res = await apiClient.put("/users/me", data);
+    return res.data;
+  },
+
+  getAll: async () => {
+    const res = await apiClient.get("/users");
+    return res.data;
+  },
+
+  createUser: async (data) => {
+    const res = await apiClient.post("/users/create", data);
+    return res.data;
+  },
+
+  deleteUser: async (id) => {
+    const res = await apiClient.delete(`/users/${id}`);
+    return res.data;
+  },
+};
 
 export default apiClient;

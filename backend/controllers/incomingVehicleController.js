@@ -6,8 +6,8 @@ exports.getUnprocessed = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 50;
     const vehicles = await IncomingVehicle.findUnprocessed(limit);
-    
-   return res.json({
+
+    return res.json({
       success: true,
       count: vehicles.length,
       data: vehicles
@@ -35,7 +35,8 @@ exports.addIncomingVehicle = async (req, res) => {
     }
 
     // Calculate pollution score
-    const pollutionScore = fuelType === 'ICE' ? 80 : 0;
+    const pollutionScore = fuelType === 'ICE'
+      ? Math.floor(Math.random() * 10) + 40 : 0;
 
     // STEP 1: Check if Commercial vehicle - assign IGNORE decision
     if (vehicleCategory === 'Commercial') {
@@ -76,16 +77,16 @@ exports.addIncomingVehicle = async (req, res) => {
 
     // STEP 2: For Private vehicles - check total parking occupancy
     const totalOccupancyStatus = await ParkingZone.checkTotalOccupancy();
-    
+
     const decision = totalOccupancyStatus.decision; // 'Allow' or 'Warn'
-    
+
     let assignedZoneId = null;
     let assignedZoneName = null;
-    
+
     if (decision === 'Allow') {
       // Find an available zone with space
       const availableZone = await ParkingZone.findAvailableZone();
-      
+
       if (availableZone) {
         assignedZoneId = availableZone.id;
         assignedZoneName = availableZone.name;
@@ -126,7 +127,7 @@ exports.addIncomingVehicle = async (req, res) => {
         });
       }
     }
-    
+
     // STEP 3: Create incoming vehicle entry
     const vehicle = await IncomingVehicle.create({
       numberPlate,
@@ -140,11 +141,11 @@ exports.addIncomingVehicle = async (req, res) => {
 
     // STEP 4: Process vehicle
     const processResult = await IncomingVehicle.processVehicle(vehicle.id);
-    
+
     if (decision === 'Allow' && assignedZoneId && processResult.vehicleLogId) {
       // ONLY for Allow decision: Update parking zone and add to vehicle_logs
       await ParkingZone.incrementOccupancy(assignedZoneId);
-      
+
       const io = req.app.get('io');
       io.emit('newIncomingVehicle', {
         id: vehicle.id,
@@ -159,7 +160,7 @@ exports.addIncomingVehicle = async (req, res) => {
         pollution_score: pollutionScore
       });
       io.emit('zoneUpdated', await ParkingZone.findById(assignedZoneId));
-      
+
       return res.status(201).json({
         success: true,
         message: `Private vehicle - Decision: Allow (Assigned to ${assignedZoneName})`,
@@ -185,7 +186,7 @@ exports.addIncomingVehicle = async (req, res) => {
         zone_name: null,
         pollution_score: pollutionScore
       });
-      
+
       return res.status(201).json({
         success: true,
         message: 'Private vehicle - Decision: Warn (All zones full)',
@@ -208,23 +209,23 @@ exports.addIncomingVehicle = async (req, res) => {
 exports.processVehicle = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = await IncomingVehicle.processVehicle(id);
-    
+
     if (result.success && result.vehicleLogId) {
       // Get the vehicle data
       const vehicle = await IncomingVehicle.findById(id);
-      
+
       // Update parking zone occupancy if allowed
       if (vehicle.parking_zone_id && vehicle.decision === 'Allow') {
         await ParkingZone.incrementOccupancy(vehicle.parking_zone_id);
       }
-      
+
       // Emit real-time updates
       const io = req.app.get('io');
       io.emit('vehicleProcessed', { id, vehicleLogId: result.vehicleLogId });
     }
-    
+
     res.json({
       success: true,
       message: result.message,
@@ -244,7 +245,7 @@ exports.processVehicle = async (req, res) => {
 exports.getStats = async (req, res) => {
   try {
     const stats = await IncomingVehicle.getStats();
-    
+
     res.json({
       success: true,
       data: stats

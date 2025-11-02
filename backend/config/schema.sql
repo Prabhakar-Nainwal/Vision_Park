@@ -55,6 +55,15 @@ CREATE TABLE IF NOT EXISTS vehicle_logs (
   INDEX idx_parking_zone (parking_zone_id)
 );
 
+CREATE TABLE IF NOT EXISTS users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(50) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  role ENUM('organization_admin','admin') DEFAULT 'admin',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
 -- Insert sample parking zones
 INSERT INTO parking_zones (name, total_slots, occupied_slots, location, threshold_percentage) VALUES
 ('Zone A', 100, 0, 'North Wing', 90),
