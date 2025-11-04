@@ -1,7 +1,7 @@
-"use client"
-
 import { useState, useEffect } from "react"
-import { Plus, Edit, Trash2, Loader, MapPin, AlertCircle, CheckCircle, TrendingUp } from "lucide-react"
+import { Plus, Edit, Trash2, Loader, MapPin, AlertCircle, CheckCircle, TrendingUp, X, Building2, Activity, BarChart3, Clock, Search, Filter, MoreVertical, Zap, Users, Eye } from "lucide-react"
+
+// Simulated API (same as before)
 import { zoneAPI } from "../services/api.js"
 
 const ZoneManagement = () => {
@@ -15,6 +15,7 @@ const ZoneManagement = () => {
     thresholdPercentage: "90",
   })
   const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
 
   const fetchZones = async () => {
     try {
@@ -93,14 +94,20 @@ const ZoneManagement = () => {
     fetchZones()
   }, [])
 
+  const filteredZones = zones.filter(zone =>
+    zone.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    zone.location.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
-        <div className="relative w-14 h-14 mb-6">
-          <Loader size={56} className="text-blue-600 animate-spin" />
+      <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-gray-200 border-t-violet-500 rounded-full animate-spin"></div>
+          <Zap size={28} className="text-violet-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
         </div>
-        <p className="text-lg font-semibold text-slate-700">Loading parking zones...</p>
-        <p className="text-sm text-slate-500 mt-2">Please wait</p>
+        <p className="text-lg font-semibold text-gray-800 mt-6">Loading Dashboard</p>
+        <p className="text-sm text-gray-500 mt-2">Fetching real-time data...</p>
       </div>
     )
   }
@@ -111,110 +118,181 @@ const ZoneManagement = () => {
 
     if (occupancyPercent >= threshold) {
       return {
-        color: "from-red-500 to-red-600",
+        gradient: "from-red-500/10 via-red-500/5 to-transparent",
+        barColor: "from-red-500 to-rose-600",
         textColor: "text-red-600",
-        bgColor: "bg-red-50",
-        borderColor: "border-red-200",
-        status: "Full",
+        bgColor: "bg-red-500/10",
+        borderColor: "border-red-500/30",
+        glowColor: "shadow-red-500/20",
+        status: "Critical",
         icon: AlertCircle,
       }
     } else if (occupancyPercent >= threshold - 20) {
       return {
-        color: "from-amber-500 to-amber-600",
+        gradient: "from-amber-500/10 via-amber-500/5 to-transparent",
+        barColor: "from-amber-500 to-orange-600",
         textColor: "text-amber-600",
-        bgColor: "bg-amber-50",
-        borderColor: "border-amber-200",
-        status: "Nearly Full",
-        icon: AlertCircle,
+        bgColor: "bg-amber-500/10",
+        borderColor: "border-amber-500/30",
+        glowColor: "shadow-amber-500/20",
+        status: "Warning",
+        icon: Activity,
       }
     }
     return {
-      color: "from-emerald-500 to-emerald-600",
+      gradient: "from-emerald-500/10 via-emerald-500/5 to-transparent",
+      barColor: "from-emerald-500 to-teal-600",
       textColor: "text-emerald-600",
-      bgColor: "bg-emerald-50",
-      borderColor: "border-emerald-200",
-      status: "Available",
+      bgColor: "bg-emerald-500/10",
+      borderColor: "border-emerald-500/30",
+      glowColor: "shadow-emerald-500/20",
+      status: "Optimal",
       icon: CheckCircle,
     }
   }
 
-  return (
-    <div className="min-h-screen bg-white p-5 sm:p-6 lg:p-8">
-      <div className="max-w-full">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-10">
-          <div className="max-w-2xl">
-            <h1 className="text-2xl font-bold text-gray-800">Parking Zones Management</h1>
-            <p className="text-sm text-slate-600 mt-1">Real-time monitoring and management of all parking zones in your facility</p>
-          </div>
+  const totalCapacity = zones.reduce((acc, z) => acc + z.totalSlots, 0)
+  const totalOccupied = zones.reduce((acc, z) => acc + z.occupiedSlots, 0)
+  const totalAvailable = zones.reduce((acc, z) => acc + z.availableSlots, 0)
+  const avgOccupancy = zones.length > 0 ? Math.round(zones.reduce((acc, z) => acc + z.occupancyPercentage, 0) / zones.length) : 0
 
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md transform hover:scale-[1.03] transition-all active:scale-95"
-            title="Add New Zone"
-          >
-            <Plus size={18} />
-            <span>Add New Zone</span>
-          </button>
+  return (
+    <div className="min-h-screen bg-gray-100 text-gray-900">
+      {/* Gradient Overlay */}
+      <div className="fixed inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-cyan-500/5 pointer-events-none" />
+
+      <div className="relative max-w-[1600px] mx-auto px-6 py-8">
+        {/* Enhanced Header */}
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg shadow-lg shadow-violet-500/50">
+                  <Building2 size={28} className="text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                    Zone Control Center
+                  </h1>
+                  <p className="text-gray-500 text-sm mt-1">Real-time parking management system</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="relative flex-1 lg:flex-none lg:w-64">
+                <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search zones..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                />
+              </div>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-medium rounded-lg shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 transition-all flex items-center gap-2"
+              >
+                <Plus size={20} />
+                <span className="hidden sm:inline">New Zone</span>
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Stats */}
+        {/* Analytics Cards */}
         {zones.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-slate-500 font-medium">Total Zones</p>
-                <MapPin size={16} className="text-blue-600" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div className="group relative bg-white border border-gray-200 rounded-xl p-5 hover:border-violet-400 transition-all overflow-hidden shadow-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-violet-100 rounded-lg border border-violet-200">
+                    <BarChart3 size={20} className="text-violet-600" />
+                  </div>
+                  <TrendingUp size={16} className="text-emerald-500" />
+                </div>
+                <p className="text-sm text-gray-500 mb-1">Total Zones</p>
+                <p className="text-3xl font-bold text-gray-900">{zones.length}</p>
+                <p className="text-xs text-gray-500 mt-1">Active facilities</p>
               </div>
-              <p className="text-2xl font-bold text-blue-600">{zones.length}</p>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-slate-500 font-medium">Total Capacity</p>
-                <TrendingUp size={16} className="text-cyan-600" />
+            <div className="group relative bg-white border border-gray-200 rounded-xl p-5 hover:border-cyan-400 transition-all overflow-hidden shadow-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-cyan-100 rounded-lg border border-cyan-200">
+                    <Building2 size={20} className="text-cyan-600" />
+                  </div>
+                  <Activity size={16} className="text-cyan-600" />
+                </div>
+                <p className="text-sm text-gray-500 mb-1">Total Capacity</p>
+                <p className="text-3xl font-bold text-gray-900">{totalCapacity}</p>
+                <p className="text-xs text-gray-500 mt-1">Available spaces</p>
               </div>
-              <p className="text-2xl font-bold text-cyan-600">{zones.reduce((acc, z) => acc + z.totalSlots, 0)}</p>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-slate-500 font-medium">Currently Occupied</p>
-                <TrendingUp size={16} className="text-amber-600" />
+            <div className="group relative bg-white border border-gray-200 rounded-xl p-5 hover:border-emerald-400 transition-all overflow-hidden shadow-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-emerald-100 rounded-lg border border-emerald-200">
+                    <CheckCircle size={20} className="text-emerald-600" />
+                  </div>
+                  <Eye size={16} className="text-emerald-600" />
+                </div>
+                <p className="text-sm text-gray-500 mb-1">Available Now</p>
+                <p className="text-3xl font-bold text-gray-900">{totalAvailable}</p>
+                <p className="text-xs text-gray-500 mt-1">Ready to park</p>
               </div>
-              <p className="text-2xl font-bold text-amber-600">{zones.reduce((acc, z) => acc + z.occupiedSlots, 0)}</p>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all">
-              <div className="flex items-center justify-between mb-1">
-                <p className="text-xs text-slate-500 font-medium">Available Slots</p>
-                <CheckCircle size={16} className="text-emerald-600" />
+            <div className="group relative bg-white border border-gray-200 rounded-xl p-5 hover:border-amber-400 transition-all overflow-hidden shadow-sm">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 bg-amber-100 rounded-lg border border-amber-200">
+                    <Activity size={20} className="text-amber-600" />
+                  </div>
+                  <Users size={16} className="text-amber-600" />
+                </div>
+                <p className="text-sm text-gray-500 mb-1">Avg Occupancy</p>
+                <p className="text-3xl font-bold text-gray-900">{avgOccupancy}%</p>
+                <p className="text-xs text-gray-500 mt-1">Across all zones</p>
               </div>
-              <p className="text-2xl font-bold text-emerald-600">{zones.reduce((acc, z) => acc + z.availableSlots, 0)}</p>
             </div>
           </div>
         )}
 
         {/* Zones Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-6 mb-8">
-          {zones.length === 0 ? (
-            <div className="col-span-full">
-              <div className="flex flex-col items-center justify-center py-20 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl">
-                <div className="mb-4 p-3 bg-slate-100 rounded-xl">
-                  <MapPin size={48} className="text-slate-400" />
-                </div>
-                <p className="text-xl font-semibold text-slate-700 mb-2">No parking zones yet</p>
-                <p className="text-sm text-slate-500 mb-6 text-center max-w-sm">Get started by creating your first parking zone to begin monitoring</p>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:scale-[1.03] transition-all"
-                >
-                  Create First Zone
-                </button>
+        {filteredZones.length === 0 && zones.length === 0 ? (
+          <div className="relative bg-white border-2 border-dashed border-gray-300 rounded-2xl p-16 text-center overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 via-transparent to-cyan-500/5" />
+            <div className="relative">
+              <div className="inline-flex p-5 bg-gray-100 rounded-2xl border border-gray-200 mb-6">
+                <MapPin size={56} className="text-gray-400" />
               </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">No Zones Configured</h3>
+              <p className="text-gray-500 mb-8 max-w-md mx-auto">Start by creating your first parking zone to begin monitoring and managing your facility</p>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 transition-all"
+              >
+                <Plus size={20} />
+                Create First Zone
+              </button>
             </div>
-          ) : (
-            zones.map((zone) => {
+          </div>
+        ) : filteredZones.length === 0 ? (
+          <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center">
+            <Search size={48} className="text-gray-400 mx-auto mb-4" />
+            <p className="text-gray-500">No zones match your search</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            {filteredZones.map((zone) => {
               const statusInfo = getStatusInfo(zone)
               const StatusIcon = statusInfo.icon
               const occupancyPercent = zone.occupancyPercentage
@@ -222,141 +300,167 @@ const ZoneManagement = () => {
               return (
                 <div
                   key={zone.id}
-                  className="group relative bg-white rounded-xl border border-slate-200 hover:border-blue-300 transition-all duration-300 overflow-hidden shadow-sm hover:shadow-lg hover:scale-[1.01]"
+                  className="group relative bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-gray-300 transition-all shadow-sm hover:shadow-lg"
                 >
-                  <div className={`h-1.5 bg-gradient-to-r ${statusInfo.color}`} />
+                  {/* Gradient Background */}
+                  <div className={`absolute inset-0 bg-gradient-to-br ${statusInfo.gradient} opacity-70`} />
 
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-4">
+                  {/* Content */}
+                  <div className="relative p-6">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-5">
                       <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-xl font-semibold text-slate-900">{zone.name}</h3>
-                          <div className={`flex items-center gap-2 px-3 py-1 rounded-full ${statusInfo.bgColor} border ${statusInfo.borderColor}`}>
+                        <div className="flex items-center gap-3 mb-3">
+                          <h3 className="text-xl font-bold text-gray-900">{zone.name}</h3>
+                          <div className={`flex items-center gap-1.5 px-2.5 py-1 ${statusInfo.bgColor} border ${statusInfo.borderColor} rounded-md`}>
                             <StatusIcon size={14} className={statusInfo.textColor} />
                             <span className={`text-xs font-semibold ${statusInfo.textColor}`}>{statusInfo.status}</span>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-2 text-slate-600 text-sm">
+                        <div className="flex items-center gap-2 text-gray-500 text-sm">
                           <MapPin size={14} />
-                          <span>{zone.location || "No location specified"}</span>
+                          <span>{zone.location || "Location not set"}</span>
                         </div>
                       </div>
 
-                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setEditingZone(zone)}
-                          className="p-2 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-md transition-colors border border-blue-200"
-                          title="Edit zone"
+                          className="p-2 bg-white hover:bg-violet-100 border border-gray-300 text-gray-500 hover:text-violet-600 rounded-lg transition-all"
                         >
                           <Edit size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteZone(zone.id)}
-                          className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors border border-red-200"
-                          title="Delete zone"
+                          className="p-2 bg-white hover:bg-red-100 border border-gray-300 text-gray-500 hover:text-red-600 rounded-lg transition-all"
                         >
                           <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
 
-                    <div className="mb-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-slate-700">Occupancy Rate</span>
-                        <span className={`text-lg font-bold ${statusInfo.textColor}`}>{occupancyPercent}%</span>
-                      </div>
-                      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden border border-slate-300">
-                        <div
-                          className={`h-full bg-gradient-to-r ${statusInfo.color} transition-all duration-500`}
-                          style={{ width: `${occupancyPercent}%` }}
-                        />
+                    {/* Circular Progress */}
+                    <div className="flex items-center justify-center mb-6">
+                      <div className="relative w-32 h-32">
+                        <svg className="transform -rotate-90 w-32 h-32">
+                          <circle
+                            cx="64"
+                            cy="64"
+                            r="56"
+                            stroke="currentColor"
+                            strokeWidth="8"
+                            fill="none"
+                            className="text-gray-200"
+                          />
+                          <circle
+                            cx="64"
+                            cy="64"
+                            r="56"
+                            stroke="url(#gradient)"
+                            strokeWidth="8"
+                            fill="none"
+                            strokeDasharray={`${2 * Math.PI * 56}`}
+                            strokeDashoffset={`${2 * Math.PI * 56 * (1 - occupancyPercent / 100)}`}
+                            className="transition-all duration-1000"
+                            strokeLinecap="round"
+                          />
+                          <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                              <stop offset="0%" className={statusInfo.textColor} />
+                              <stop offset="100%" className={statusInfo.textColor} style={{ opacity: 0.6 }} />
+                            </linearGradient>
+                          </defs>
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <span className={`text-3xl font-bold ${statusInfo.textColor}`}>{occupancyPercent}%</span>
+                          <span className="text-xs text-gray-500 mt-1">Occupied</span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 hover:border-slate-300 transition-all">
-                        <p className="text-xs text-slate-600 font-medium mb-1">Total Capacity</p>
-                        <p className="text-lg font-bold text-slate-900">{zone.totalSlots}</p>
-                        <p className="text-xs text-slate-500 mt-1">parking slots</p>
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                        <p className="text-2xl font-bold text-gray-900">{zone.totalSlots}</p>
+                        <p className="text-xs text-gray-500 mt-1">Total</p>
                       </div>
-
-                      <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 hover:border-emerald-300 transition-all">
-                        <p className="text-xs text-emerald-700 font-medium mb-1">Available</p>
-                        <p className="text-lg font-bold text-emerald-600">{zone.availableSlots}</p>
-                        <p className="text-xs text-emerald-600 mt-1">ready to use</p>
+                      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 text-center">
+                        <p className="text-2xl font-bold text-emerald-600">{zone.availableSlots}</p>
+                        <p className="text-xs text-emerald-600 mt-1">Free</p>
                       </div>
-
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 hover:border-blue-300 transition-all">
-                        <p className="text-xs text-blue-700 font-medium mb-1">Occupied</p>
-                        <p className="text-lg font-bold text-blue-600">{zone.occupiedSlots}</p>
-                        <p className="text-xs text-blue-600 mt-1">in use now</p>
-                      </div>
-
-                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 hover:border-amber-300 transition-all">
-                        <p className="text-xs text-amber-700 font-medium mb-1">Alert Level</p>
-                        <p className="text-lg font-bold text-amber-600">{zone.thresholdPercentage}%</p>
-                        <p className="text-xs text-amber-600 mt-1">threshold</p>
+                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                        <p className="text-2xl font-bold text-gray-900">{zone.thresholdPercentage}%</p>
+                        <p className="text-xs text-gray-500 mt-1">Alert</p>
                       </div>
                     </div>
                   </div>
                 </div>
               )
-            })
-          )}
-        </div>
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Add Zone Modal */}
+      {/* Add Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform transition-all border border-slate-200">
-            <div className="bg-gradient-to-r from-blue-50 to-cyan-50 px-6 py-4 border-b border-slate-200">
-              <h2 className="text-xl font-semibold text-slate-900">Create New Zone</h2>
-              <p className="text-sm text-slate-600 mt-1">Add a new parking zone to your management system</p>
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="relative bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-b border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Create New Zone</h2>
+                  <p className="text-sm text-gray-500 mt-1">Add a parking zone to your system</p>
+                </div>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-gray-500" />
+                </button>
+              </div>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Zone Name *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Zone Name *</label>
                 <input
                   type="text"
                   value={newZone.name}
                   onChange={(e) => setNewZone({ ...newZone, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-slate-900 placeholder-slate-400 text-sm"
-                  placeholder="e.g., Zone D, North Wing"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                  placeholder="e.g., Zone A, North Parking"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Total Capacity *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Total Capacity *</label>
                 <input
                   type="number"
                   value={newZone.totalSlots}
                   onChange={(e) => setNewZone({ ...newZone, totalSlots: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-slate-900 text-sm"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
                   placeholder="e.g., 100"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Location</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
                 <input
                   type="text"
                   value={newZone.location}
                   onChange={(e) => setNewZone({ ...newZone, location: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-slate-900 text-sm"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
                   placeholder="e.g., West Wing, Building A"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Alert Threshold % *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Alert Threshold (%) *</label>
                 <input
                   type="number"
                   value={newZone.thresholdPercentage}
                   onChange={(e) => setNewZone({ ...newZone, thresholdPercentage: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all text-slate-900 text-sm"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
                   placeholder="e.g., 90"
                   min="1"
                   max="100"
@@ -364,16 +468,16 @@ const ZoneManagement = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 p-4 bg-slate-50 rounded-b-2xl border-t border-slate-200">
+            <div className="flex gap-3 p-6 bg-gray-50 border-t border-gray-200">
               <button
                 onClick={handleAddZone}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-md hover:shadow-md transform hover:scale-[1.03] transition-all active:scale-95 text-sm"
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-semibold rounded-lg shadow-lg shadow-violet-500/30 transition-all"
               >
                 Create Zone
               </button>
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 px-4 py-2 bg-slate-200 text-slate-700 font-medium rounded-md hover:bg-slate-300 transition-all text-sm"
+                className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-all"
               >
                 Cancel
               </button>
@@ -382,69 +486,81 @@ const ZoneManagement = () => {
         </div>
       )}
 
-      {/* Edit Zone Modal */}
+      {/* Edit Modal */}
       {editingZone && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform transition-all border border-slate-200">
-            <div className="bg-gradient-to-r from-amber-50 to-orange-50 px-6 py-4 border-b border-slate-200">
-              <h2 className="text-xl font-semibold text-slate-900">Edit Zone Details</h2>
-              <p className="text-sm text-slate-600 mt-1">Update zone configuration and settings</p>
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+            <div className="relative bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-b border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Edit Zone</h2>
+                  <p className="text-sm text-gray-500 mt-1">Update zone configuration</p>
+                </div>
+                <button
+                  onClick={() => setEditingZone(null)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-gray-500" />
+                </button>
+              </div>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-5">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Zone Name *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Zone Name *</label>
                 <input
                   type="text"
                   value={editingZone.name}
                   onChange={(e) => setEditingZone({ ...editingZone, name: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-md focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-all text-slate-900 text-sm"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Total Capacity *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Total Capacity *</label>
                 <input
                   type="number"
                   value={editingZone.totalSlots}
                   onChange={(e) => setEditingZone({ ...editingZone, totalSlots: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-md focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-all text-slate-900 text-sm"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Location</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
                 <input
                   type="text"
                   value={editingZone.location}
                   onChange={(e) => setEditingZone({ ...editingZone, location: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-md focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-all text-slate-900 text-sm"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  placeholder="e.g., West Wing, Building A"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Alert Threshold % *</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Alert Threshold (%) *</label>
                 <input
                   type="number"
                   value={editingZone.thresholdPercentage}
                   onChange={(e) => setEditingZone({ ...editingZone, thresholdPercentage: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-md focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 focus:outline-none transition-all text-slate-900 text-sm"
+                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                  placeholder="e.g., 90"
                   min="1"
                   max="100"
                 />
               </div>
             </div>
 
-            <div className="flex gap-3 p-4 bg-slate-50 rounded-b-2xl border-t border-slate-200">
+            <div className="flex gap-3 p-6 bg-gray-50 border-t border-gray-200">
               <button
                 onClick={handleUpdateZone}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white font-medium rounded-md hover:shadow-md transform hover:scale-[1.03] transition-all active:scale-95 text-sm"
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-lg shadow-lg shadow-cyan-500/30 transition-all"
               >
                 Update Zone
               </button>
               <button
                 onClick={() => setEditingZone(null)}
-                className="flex-1 px-4 py-2 bg-slate-200 text-slate-700 font-medium rounded-md hover:bg-slate-300 transition-all text-sm"
+                className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-all"
               >
                 Cancel
               </button>

@@ -21,65 +21,42 @@ const VehicleManagement = () => {
 
   const [showFilters, setShowFilters] = useState(false)
 
-  // State to track only the very first load
-  const [isInitialLoading, setIsInitialLoading] = useState(true)
-  // State to prevent debounced search from firing on first load
-  const [isFirstSearch, setIsFirstSearch] = useState(true)
-
   // === Fetch Vehicles ===
-  const fetchVehicles = async (page = 1) => {
-    try {
-      setLoading(true)
-      const filters = { page, limit: itemsPerPage }
+const fetchVehicles = async (page = 1) => {
+  try {
+    setLoading(true)
+    const filters = { page, limit: itemsPerPage }
 
-      if (filterFuel !== "all") filters.fuelType = filterFuel
-      if (filterCategory !== "all") filters.vehicleCategory = filterCategory
-      if (searchTerm) filters.search = searchTerm
-      if (startDate) filters.startDate = startDate
-      if (endDate) filters.endDate = endDate
+    if (filterFuel !== "all") filters.fuelType = filterFuel
+    if (filterCategory !== "all") filters.vehicleCategory = filterCategory
+    if (searchTerm) filters.search = searchTerm
+    if (startDate) filters.startDate = startDate
+    if (endDate) filters.endDate = endDate
 
-      const response = await vehicleAPI.getAll(filters)
-      if (response.success) {
-        setVehicles(response.data)
-        if (response.pagination) {
-          setTotalItems(response.pagination.total)
-          setTotalPages(response.pagination.pages)
-          setCurrentPage(response.pagination.page)
-        } else {
-          setTotalItems(response.count || response.data.length)
-          setTotalPages(Math.ceil((response.count || response.data.length) / itemsPerPage))
-        }
+    const response = await vehicleAPI.getAll(filters)
+    if (response.success) {
+      setVehicles(response.data)
+      if (response.pagination) {
+        setTotalItems(response.pagination.total)
+        setTotalPages(response.pagination.pages)
+        setCurrentPage(response.pagination.page)
+      } else {
+        setTotalItems(response.count || response.data.length)
+        setTotalPages(Math.ceil((response.count || response.data.length) / itemsPerPage))
       }
-    } catch (error) {
-      console.error("Error fetching vehicles:", error)
-    } finally {
-      setLoading(false)
-      setIsInitialLoading(false)
     }
+  } catch (error) {
+    console.error("Error fetching vehicles:", error)
+  } finally {
+    setLoading(false)
   }
+}
 
-  // This effect handles the initial load and changes to itemsPerPage
-  useEffect(() => {
-    fetchVehicles(currentPage)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, itemsPerPage])
 
-  // This effect handles the debounced live search
-  useEffect(() => {
-    if (isFirstSearch) {
-      setIsFirstSearch(false)
-      return
-    }
-
-    const searchTimer = setTimeout(() => {
-      fetchVehicles(1) // Always reset to page 1 for a new search
-    }, 400) 
-
-    return () => {
-      clearTimeout(searchTimer)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]) 
+useEffect(() => {
+  fetchVehicles(currentPage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [currentPage, itemsPerPage]);
 
   // === Exit Handler ===
   const handleExitVehicle = async (id) => {
@@ -120,16 +97,15 @@ const VehicleManagement = () => {
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
       setCurrentPage(page)
-      // === THIS LINE IS NOW RESTORED ===
-      // This fixes the pagination crash you reported.
       fetchVehicles(page)
     }
   }
 
-  const handleItemsPerPageChange = (newLimit) => {
-    setItemsPerPage(newLimit)
-    setCurrentPage(1)
-  }
+const handleItemsPerPageChange = (newLimit) => {
+  setItemsPerPage(newLimit);
+  setCurrentPage(1);
+};
+
 
   const formatTime = (timestamp) => {
     if (!timestamp) return "-"
@@ -168,8 +144,7 @@ const VehicleManagement = () => {
     fetchVehicles(1)
   }
 
-  // This only runs on the *very first* load
-  if (isInitialLoading) {
+  if (loading && currentPage === 1) {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="text-center">
@@ -182,18 +157,16 @@ const VehicleManagement = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* ... (Header is unchanged) ... */}
       <div className="bg-white/95 backdrop-blur-md border-b border-blue-100/40 shadow-sm hover:shadow-md transition-shadow duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-800">Vehicle Management</h1>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Vehicle Management
+              </h1>
               <p className="text-sm text-slate-500 mt-2 font-medium">
                 {vehicles.length > 0
-                  ? `Viewing ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(
-                      currentPage * itemsPerPage,
-                      totalItems,
-                    )} of ${totalItems} vehicles`
+                  ? `Viewing ${(currentPage - 1) * itemsPerPage + 1}–${Math.min(currentPage * itemsPerPage, totalItems)} of ${totalItems} vehicles`
                   : "No vehicles found"}
               </p>
             </div>
@@ -209,7 +182,6 @@ const VehicleManagement = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6">
-        {/* ... (Filter section is unchanged) ... */}
         <div className="bg-white rounded-xl shadow-sm border border-blue-100/40 overflow-hidden hover:shadow-md transition-shadow duration-300">
           <div
             className="flex items-center justify-between p-5 md:p-6 cursor-pointer hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 group"
@@ -226,9 +198,7 @@ const VehicleManagement = () => {
             </div>
             <ChevronRight
               size={20}
-              className={`text-slate-400 transition-transform duration-300 group-hover:text-indigo-600 ${
-                showFilters ? "rotate-90" : ""
-              }`}
+              className={`text-slate-400 transition-transform duration-300 group-hover:text-indigo-600 ${showFilters ? "rotate-90" : ""}`}
             />
           </div>
 
@@ -250,12 +220,12 @@ const VehicleManagement = () => {
                         placeholder="e.g., ABC-1234"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && fetchVehicles(1)}
                         className="w-full pl-10 pr-4 py-2.5 bg-white border border-blue-200 rounded-lg placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm hover:border-blue-300"
                       />
                     </div>
                   </div>
 
-                  {/* ... (Other filters are unchanged) ... */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2.5">
                       Fuel Type
@@ -334,7 +304,6 @@ const VehicleManagement = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                {/* ... (Table header unchanged) ... */}
                 <tr className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100/40">
                   {[
                     "Number Plate",
@@ -356,8 +325,7 @@ const VehicleManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-blue-100/40">
-                {/* This logic prevents the table from "blinking" */}
-                {loading && vehicles.length === 0 ? (
+                {loading ? (
                   <tr>
                     <td colSpan="8" className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center gap-3">
@@ -378,7 +346,6 @@ const VehicleManagement = () => {
                       key={v.id}
                       className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 transition-all duration-200 border-b border-blue-100/40 last:border-0 cursor-pointer"
                     >
-                      {/* ... (Table row content unchanged) ... */}
                       <td className="px-4 md:px-6 py-4 font-mono font-bold text-slate-900 text-sm md:text-base">
                         {v.number_plate}
                       </td>
@@ -435,7 +402,6 @@ const VehicleManagement = () => {
             </table>
           </div>
 
-          {/* ... (Pagination logic is unchanged and will now work) ... */}
           {!loading && totalPages > 1 && (
             <div className="px-4 md:px-6 py-4 bg-gradient-to-r from-white to-blue-50/30 border-t border-blue-100/40 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-xs md:text-sm text-slate-600 font-medium">
