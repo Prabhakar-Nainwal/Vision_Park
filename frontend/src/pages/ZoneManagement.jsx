@@ -16,6 +16,9 @@ const ZoneManagement = () => {
   })
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const [deleteZoneId, setDeleteZoneId] = useState(null);
+  const [deleteZoneName, setDeleteZoneName] = useState("");
+
 
   const fetchZones = async () => {
     try {
@@ -76,19 +79,20 @@ const ZoneManagement = () => {
     }
   }
 
-  const handleDeleteZone = async (id) => {
-    if (window.confirm("Are you sure you want to delete this parking zone?")) {
-      try {
-        const response = await zoneAPI.delete(id)
-        if (response.success) {
-          await fetchZones()
-        }
-      } catch (error) {
-        console.error("Error deleting zone:", error)
-        alert("Failed to delete zone")
+  const confirmDeleteZone = async () => {
+    try {
+      const response = await zoneAPI.delete(deleteZoneId);
+      if (response.success) {
+        await fetchZones();
+        setDeleteZoneId(null);
+        setDeleteZoneName("");
       }
+    } catch (error) {
+      console.error("Error deleting zone:", error);
+      alert("Failed to delete zone");
     }
-  }
+  };
+
 
   useEffect(() => {
     fetchZones()
@@ -166,18 +170,19 @@ const ZoneManagement = () => {
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
             <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg shadow-lg shadow-violet-500/50">
-                  <Building2 size={28} className="text-white" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                    Zone Control Center
+              <div className="flex items-center gap-3 mb-4">
+                <div className="px-2 mb-6">
+                  <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 bg-clip-text text-transparent">
+                    Parking Zones Management
                   </h1>
-                  <p className="text-gray-500 text-sm mt-1">Real-time parking management system</p>
+                  <p className="text-gray-600 text-sm mt-1 font-medium">
+                    Real-time parking management system
+                  </p>
+                  <div className="w-20 h-[3px] mt-2 bg-gradient-to-r from-blue-400 to-sky-400 rounded-full"></div>
                 </div>
               </div>
             </div>
+
 
             <div className="flex items-center gap-3">
               <div className="relative flex-1 lg:flex-none lg:w-64">
@@ -331,7 +336,11 @@ const ZoneManagement = () => {
                           <Edit size={16} />
                         </button>
                         <button
-                          onClick={() => handleDeleteZone(zone.id)}
+                          onClick={() => {
+                            setDeleteZoneId(zone.id);
+                            setDeleteZoneName(zone.name);
+                          }}
+
                           className="p-2 bg-white hover:bg-red-100 border border-gray-300 text-gray-500 hover:text-red-600 rounded-lg transition-all"
                         >
                           <Trash2 size={16} />
@@ -568,6 +577,51 @@ const ZoneManagement = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteZoneId && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="relative bg-gradient-to-r from-red-500/10 to-rose-500/10 border-b border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900">Delete Zone</h2>
+                <button
+                  onClick={() => setDeleteZoneId(null)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X size={20} className="text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6 text-center space-y-4">
+              <AlertCircle className="mx-auto text-red-500" size={48} />
+              <h3 className="text-lg font-semibold text-gray-800">
+                Are you sure you want to delete <span className="text-red-600">{deleteZoneName}</span>?
+              </h3>
+              <p className="text-sm text-gray-500">
+                This action cannot be undone. All data for this zone will be permanently removed.
+              </p>
+            </div>
+
+            <div className="flex gap-3 p-6 bg-gray-50 border-t border-gray-200">
+              <button
+                onClick={confirmDeleteZone}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-semibold rounded-lg shadow-lg shadow-red-500/30 transition-all"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setDeleteZoneId(null)}
+                className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-all"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }

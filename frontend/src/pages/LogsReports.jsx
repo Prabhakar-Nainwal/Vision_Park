@@ -116,13 +116,19 @@ const LogsReports = () => {
   }
 
   return (
-    <div className="px-4 md:px-8 lg:px-10 py-6 space-y-6 bg-white min-h-screen">
+    <div className="px-4 md:px-8 lg:px-10 py-6 space-y-6  min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Logs & Reports</h1>
-          <p className="text-sm text-gray-500">Export and analyze daily traffic data and pollution trends</p>
+        <div className="px-2 mb-6">
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 bg-clip-text text-transparent">
+            Logs & Reports
+          </h1>
+          <p className="text-gray-600 text-sm mt-1 font-medium">
+            Export and analyze daily traffic data and pollution trends
+          </p>
+          <div className="w-20 h-[3px] mt-2 bg-gradient-to-r from-blue-400 to-sky-400 rounded-full"></div>
         </div>
+
         <div className="flex gap-3">
           <button
             onClick={handleExportCSV}
@@ -195,11 +201,10 @@ const LogsReports = () => {
                     <td className="px-4 py-3 font-mono">{vehicle.number_plate}</td>
                     <td className="px-4 py-3">{vehicle.vehicle_category}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        vehicle.fuel_type === 'EV'
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${vehicle.fuel_type === 'EV'
                           ? 'bg-emerald-100 text-emerald-700'
                           : 'bg-red-100 text-red-700'
-                      }`}>
+                        }`}>
                         {vehicle.fuel_type}
                       </span>
                     </td>
@@ -214,11 +219,11 @@ const LogsReports = () => {
                     <td className="px-4 py-3 text-gray-600">
                       {vehicle.exit_time
                         ? new Date(vehicle.exit_time).toLocaleString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })
                         : '-'}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{vehicle.zone_name || 'N/A'}</td>

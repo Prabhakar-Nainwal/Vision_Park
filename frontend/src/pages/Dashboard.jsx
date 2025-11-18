@@ -4,9 +4,8 @@ import { subscribeToIncomingVehicles, subscribeToZones } from '../services/socke
 import { vehicleAPI, zoneAPI, incomingVehicleAPI } from '../services/api';
 
 // Import existing components
-import ParkingCard from '../components/ParkingCard';
 import LiveFeed from '../components/LiveFeed';
-import PollutionMeter from '../components/PollutionMeter';
+import FuelDistribution from '../components/FuelDistribution';
 import StatsCards from '../components/StatsCards';
 
 const Dashboard = () => {
@@ -40,7 +39,7 @@ const Dashboard = () => {
         const response = await vehicleAPI.getAnalytics();
         if (response.success) {
           const { fuelDistribution, pollutionIndex } = response.data;
-          
+
           if (fuelDistribution && fuelDistribution.length > 0) {
             const chartData = fuelDistribution.map(item => ({
               name: item.fuel_type,
@@ -49,7 +48,7 @@ const Dashboard = () => {
             }));
             setFuelDistribution(chartData);
           }
-          
+
           setPollutionIndex(pollutionIndex || 0);
         }
       } catch (error) {
@@ -63,14 +62,14 @@ const Dashboard = () => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const todayStr = today.toISOString().split('T')[0];
-        
+
         const response = await vehicleAPI.getAll({
           startDate: todayStr
         });
-        
+
         if (response.success) {
           const vehicles = response.data;
-          
+
           // Count today's stats from vehicle_logs
           // Since incoming_vehicles table only shows last hour stats,
           // we calculate from vehicle_logs for daily view
@@ -79,10 +78,10 @@ const Dashboard = () => {
             entryDate.setHours(0, 0, 0, 0);
             return entryDate.getTime() === today.getTime();
           });
-          
+
           // Get incoming stats for additional data (ignored/warned)
           const incomingResponse = await incomingVehicleAPI.getStats();
-          
+
           setStats({
             total: todayVehicles.length + parseInt(incomingResponse.data?.warned || 0) + parseInt(incomingResponse.data?.ignored || 0),
             allowed: todayVehicles.length, // All in vehicle_logs are allowed
@@ -101,7 +100,7 @@ const Dashboard = () => {
       await Promise.all([fetchZones(), fetchAnalytics(), fetchDailyStats()]);
       setLoading(false);
     };
-    
+
     loadData();
 
     const unsubscribeIncoming = subscribeToIncomingVehicles((newVehicle) => {
@@ -113,7 +112,7 @@ const Dashboard = () => {
       });
       fetchAnalytics();
       fetchZones();
-      fetchDailyStats(); 
+      fetchDailyStats();
     });
 
     const unsubscribeZones = subscribeToZones((updatedZone) => {
@@ -152,9 +151,15 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Real-time parking and pollution monitoring</p>
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 bg-clip-text text-transparent">
+            Dashboard
+          </h1>
+          <p className="text-gray-600 text-sm mt-1 font-medium">
+            Real-time parking and pollution monitoring
+          </p>
+          <div className="w-20 h-[3px] mt-2 bg-gradient-to-r from-blue-400 to-sky-400 rounded-full"></div>
         </div>
+
         <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
           <span className="text-sm font-medium text-gray-700">Live System</span>
@@ -169,25 +174,9 @@ const Dashboard = () => {
       {/* Real-time Feed and Pollution Meter */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <LiveFeed incomingVehicles={incomingVehicles} />
-        <PollutionMeter pollutionIndex={pollutionIndex} fuelDistribution={fuelDistribution} />
+        <FuelDistribution pollutionIndex={pollutionIndex} fuelDistribution={fuelDistribution} />
       </div>
 
-      
-      {/* Parking Zones Section */}
-      <div>
-        <h2 className="text-xl font-semibold mb-4 text-gray-700">Parking Zone Overview</h2>
-        {zones.length === 0 ? (
-          <div className="bg-white p-8 rounded-lg shadow-sm text-center text-gray-500">
-            No parking zones configured
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {zones.map(zone => (
-              <ParkingCard key={zone.id} zone={zone} />
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 };

@@ -72,8 +72,6 @@ const Dashboard = () => {
           const vehicles = response.data
 
           // Count today's stats from vehicle_logs
-          // Since incoming_vehicles table only shows last hour stats,
-          // we calculate from vehicle_logs for daily view
           const todayVehicles = vehicles.filter((v) => {
             const entryDate = new Date(v.entry_time)
             entryDate.setHours(0, 0, 0, 0)
@@ -88,7 +86,7 @@ const Dashboard = () => {
               todayVehicles.length +
               Number.parseInt(incomingResponse.data?.warned || 0) +
               Number.parseInt(incomingResponse.data?.ignored || 0),
-            allowed: todayVehicles.length, // All in vehicle_logs are allowed
+            allowed: todayVehicles.length,
             warned: incomingResponse.data?.warned || 0,
             ignored: incomingResponse.data?.ignored || 0,
             avg_pollution: incomingResponse.data?.avg_pollution || 0,
@@ -125,7 +123,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="px-4 md:px-8 lg:px-10 space-y-6">
+    <div className="px-4 md:px-8 lg:px-10 space-y-6 pb-10">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -141,15 +139,20 @@ const Dashboard = () => {
       {/* Stats Cards */}
       <StatsCards stats={stats} period="today" />
 
-      <div className="grid grid-cols-[65%_35%] w-full gap-8">
-        <div>
+      {/* Main Layout: Maintains 65% | 35% Split on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] w-full gap-8 items-start">
+        
+        {/* LEFT COLUMN (65%) */}
+        <div className="min-w-0"> {/* min-w-0 prevents flex/grid overflow issues */}
           <h2 className="text-xl font-semibold mb-4 text-gray-700">Parking Zone Overview</h2>
           {zones.length === 0 ? (
             <div className="bg-white p-8 rounded-lg shadow-sm text-center text-gray-500">
               No parking zones configured
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            // FIX: Changed from 3 columns to 2 columns. 
+            // 3 columns inside a 65% container makes cards too thin/messy.
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               {zones.map((zone) => (
                 <ParkingCard key={zone.id} zone={zone} />
               ))}
@@ -157,7 +160,10 @@ const Dashboard = () => {
           )}
         </div>
 
-        <PollutionMeter pollutionIndex={pollutionIndex} fuelDistribution={fuelDistribution} />
+        {/* RIGHT COLUMN (35%) */}
+        <div className="min-w-0">
+          <PollutionMeter pollutionIndex={pollutionIndex} fuelDistribution={fuelDistribution} />
+        </div>
       </div>
     </div>
   )

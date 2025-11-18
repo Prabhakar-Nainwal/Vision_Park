@@ -127,7 +127,7 @@ while True:
             "numberPlate": best_plate["plate"],
             "vehicleCategory": best_plate["vehicleCategory"],
             "fuelType": best_plate["fuelType"],
-            "confidence": round(float(best_score), 2)
+            "confidence": round(float(best_score), 2) * 100
         }
 
         print(json.dumps(payload, indent=4))
