@@ -146,6 +146,62 @@ class IncomingVehicle {
     const [result] = await db.execute(query, [daysOld]);
     return result.affectedRows;
   }
+//logs & reports
+static async getHistory(filters = {}) {
+    let baseQuery = `FROM incoming_vehicles iv LEFT JOIN parking_zones p ON iv.parking_zone_id = p.id WHERE 1=1`;
+    const params = [];
+
+    if (filters.search) {
+      baseQuery += ' AND iv.number_plate LIKE ?';
+      params.push(`%${filters.search}%`);
+    }
+    if (filters.startDate) {
+      baseQuery += ' AND iv.detected_time >= ?';
+      params.push(filters.startDate);
+    }
+    if (filters.endDate) {
+      baseQuery += ' AND iv.detected_time <= ?';
+      params.push(filters.endDate);
+    }
+
+    // 1. Get Total Count
+    const countQuery = `SELECT COUNT(*) as total ${baseQuery}`;
+    const [countResult] = await db.execute(countQuery, params);
+    const totalRecords = countResult[0].total;
+
+    // 2. Get Data
+    const page = parseInt(filters.page) || 1;
+    const limit = parseInt(filters.limit) || 20;
+    const offset = (page - 1) * limit;
+
+    // FIX: If limit is very high (e.g. 10000 for export), simple LIMIT works fine.
+    const dataQuery = `SELECT iv.*, p.name as zone_name ${baseQuery} ORDER BY iv.detected_time DESC LIMIT ${limit} OFFSET ${offset}`;
+    
+    const [rows] = await db.execute(dataQuery, params);
+
+    return {
+      data: rows,
+      pagination: {
+        totalRecords,
+        currentPage: page,
+        totalPages: Math.ceil(totalRecords / limit),
+        limit
+      }
+    };
+  }
+
+  static async getAnalytics() {
+    const dailyQuery = `SELECT DATE(detected_time) as date, COUNT(*) as count, AVG(pollution_score) as avg_pollution FROM incoming_vehicles WHERE detected_time >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) GROUP BY DATE(detected_time) ORDER BY date ASC`;
+    const [dailyRows] = await db.execute(dailyQuery);
+    return { dailyCount: dailyRows };
+  }
+
+  // static async getStats() {
+  //   const query = `SELECT COUNT(*) as total, SUM(CASE WHEN processed = FALSE THEN 1 ELSE 0 END) as unprocessed, SUM(CASE WHEN decision = 'Allow' THEN 1 ELSE 0 END) as allowed, AVG(pollution_score) as avg_pollution FROM incoming_vehicles WHERE detected_time >= DATE_SUB(NOW(), INTERVAL 1 DAY)`;
+  //   const [rows] = await db.execute(query);
+  //   return rows[0];
+  // }
+
 }
 
 module.exports = IncomingVehicle;

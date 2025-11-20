@@ -259,3 +259,42 @@ exports.getStats = async (req, res) => {
     });
   }
 };
+
+// logs & reports
+// Get History (for Logs & Reports page)
+exports.getHistory = async (req, res) => {
+  try {
+    const filters = {
+      search: req.query.search,
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+      page: req.query.page,   // Pass page
+      limit: req.query.limit  // Pass limit
+    };
+
+    const result = await IncomingVehicle.getHistory(filters);
+
+    res.json({
+      success: true,
+      data: result.data,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    console.error('Error fetching history:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+// Get Analytics (for Logs & Reports page)
+exports.getAnalytics = async (req, res) => {
+  try {
+    const data = await IncomingVehicle.getAnalytics();
+    res.json({
+      success: true,
+      data: data
+    });
+  } catch (error) {
+    console.error('Error fetching analytics:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};

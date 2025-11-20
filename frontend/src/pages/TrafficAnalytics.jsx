@@ -82,7 +82,8 @@ const TrafficAnalytics = () => {
 
 
         {/* View By + Date Filter */}
-        <div className="flex items-center gap-6">
+        <div className="bg-slate-50 border border-slate-300 rounded-xl p-4 shadow-sm">
+
 
           {/* Date Filter  */}
           {type === "day" && (

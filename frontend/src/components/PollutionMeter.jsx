@@ -54,7 +54,7 @@ const PollutionMeter = ({ pollutionIndex = 0 }) => {
   const aqiInfo = getAqiStatus(pollutionIndex)
 
   return (
-    <div className="w-full max-w-3xl mx-auto">
+    <div className="w-full max-w-md mx-auto">
       {/* Gauge Section */}
       <div className="bg-white rounded-3xl p-8 shadow-xl border-2 border-slate-200 mb-6 overflow-hidden relative">
         <div className="text-center mb-6">

@@ -7,6 +7,8 @@ CREATE TABLE IF NOT EXISTS parking_zones (
   name VARCHAR(100) NOT NULL UNIQUE,
   total_slots INT NOT NULL CHECK (total_slots > 0),
   occupied_slots INT DEFAULT 0 CHECK (occupied_slots >= 0),
+  latitude DECIMAL(10, 8) DEFAULT 0.00000000,
+  longitude DECIMAL(11, 8) DEFAULT 0.00000000,
   location VARCHAR(255) DEFAULT '',
   threshold_percentage INT DEFAULT 90,
   is_active BOOLEAN DEFAULT TRUE,

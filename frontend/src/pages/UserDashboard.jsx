@@ -1,3 +1,5 @@
+// File: UserDashboard.jsx
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -12,7 +14,8 @@ import StatsCards from "../components/StatsCards"
 
 const Dashboard = () => {
   const [zones, setZones] = useState([])
-  const [pollutionIndex, setPollutionIndex] = useState(0)
+  // Reverting to null to prevent displaying 0 while loading (as discussed previously)
+  const [pollutionIndex, setPollutionIndex] = useState(null)
   const [fuelDistribution, setFuelDistribution] = useState([])
   const [stats, setStats] = useState({
     total: 0,
@@ -50,7 +53,12 @@ const Dashboard = () => {
             setFuelDistribution(chartData)
           }
 
-          setPollutionIndex(pollutionIndex || 0)
+          // Ensure pollutionIndex is set correctly, defaulting to 21 (backend floor) if data is missing
+          if (response.data.pollutionIndex !== undefined && response.data.pollutionIndex !== null) {
+            setPollutionIndex(response.data.pollutionIndex)
+          } else if (response.data) {
+            setPollutionIndex(21) // Safe minimum value
+          }
         }
       } catch (error) {
         console.error("Error fetching analytics:", error)
@@ -81,14 +89,18 @@ const Dashboard = () => {
           // Get incoming stats for additional data (ignored/warned)
           const incomingResponse = await incomingVehicleAPI.getStats()
 
+          // FIX: Apply Number.parseInt to ensure numerical values
+          const warnedCount = Number.parseInt(incomingResponse.data?.warned || 0);
+          const ignoredCount = Number.parseInt(incomingResponse.data?.ignored || 0);
+
           setStats({
             total:
               todayVehicles.length +
-              Number.parseInt(incomingResponse.data?.warned || 0) +
-              Number.parseInt(incomingResponse.data?.ignored || 0),
+              warnedCount +
+              ignoredCount,
             allowed: todayVehicles.length,
-            warned: incomingResponse.data?.warned || 0,
-            ignored: incomingResponse.data?.ignored || 0,
+            warned: warnedCount, // Storing the parsed number
+            ignored: ignoredCount, // Storing the parsed number
             avg_pollution: incomingResponse.data?.avg_pollution || 0,
           })
         }
@@ -106,7 +118,9 @@ const Dashboard = () => {
     loadData()
 
     const unsubscribeZones = subscribeToZones((updatedZone) => {
-      setZones((prev) => prev.map((z) => (z.id === updatedZone.id ? updatedZone : z)))
+      // FIX: Merge the updatedZone data with the previous state (z)
+      // This preserves static fields like latitude and longitude.
+      setZones((prev) => prev.map((z) => (z.id === updatedZone.id ? { ...z, ...updatedZone } : z)))
     })
     return () => {
       unsubscribeZones()
@@ -127,9 +141,15 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Real-time parking and pollution monitoring</p>
+          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 bg-clip-text text-transparent">
+            Dashboard
+          </h1>
+          <p className="text-gray-600 text-sm mt-1 font-medium">
+            Real-time parking and pollution monitoring
+          </p>
+          <div className="w-20 h-[3px] mt-2 bg-gradient-to-r from-blue-400 to-sky-400 rounded-full"></div>
         </div>
+
         <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
           <span className="text-sm font-medium text-gray-700">Live System</span>
@@ -139,30 +159,41 @@ const Dashboard = () => {
       {/* Stats Cards */}
       <StatsCards stats={stats} period="today" />
 
-      {/* Main Layout: Maintains 65% | 35% Split on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-[65%_35%] w-full gap-8 items-start">
-        
-        {/* LEFT COLUMN (65%) */}
-        <div className="min-w-0"> {/* min-w-0 prevents flex/grid overflow issues */}
+      {/* Main Layout — cleaner responsive distribution */}
+      <div className="grid grid-cols-1 xl:grid-cols-[68%_32%] gap-10 items-start">
+
+
+        {/* LEFT COLUMN (Parking Zones) */}
+        <div className="min-w-0">
           <h2 className="text-xl font-semibold mb-4 text-gray-700">Parking Zone Overview</h2>
+
           {zones.length === 0 ? (
             <div className="bg-white p-8 rounded-lg shadow-sm text-center text-gray-500">
               No parking zones configured
             </div>
           ) : (
-            // FIX: Changed from 3 columns to 2 columns. 
-            // 3 columns inside a 65% container makes cards too thin/messy.
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="grid  grid-cols-1  sm:grid-cols-2  xl:grid-cols-2  2xl:grid-cols-3 gap-5">
               {zones.map((zone) => (
-                <ParkingCard key={zone.id} zone={zone} />
+                <div key={zone.id} className="w-full">
+                  <ParkingCard zone={zone} />
+                </div>
               ))}
             </div>
           )}
         </div>
 
+
         {/* RIGHT COLUMN (35%) */}
         <div className="min-w-0">
-          <PollutionMeter pollutionIndex={pollutionIndex} fuelDistribution={fuelDistribution} />
+          {/* Conditional render for pollution meter to prevent initial 0 display */}
+          {pollutionIndex !== null ? (
+            <PollutionMeter pollutionIndex={pollutionIndex} fuelDistribution={fuelDistribution} />
+          ) : (
+            <div className="bg-white rounded-2xl p-5 shadow-xl border border-slate-200 flex items-center justify-center h-48">
+              <Loader size={24} className="text-blue-500 animate-spin mr-3" />
+              <span className="text-gray-600">Calculating AQI...</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

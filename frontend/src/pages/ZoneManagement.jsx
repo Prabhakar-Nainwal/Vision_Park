@@ -8,12 +8,17 @@ const ZoneManagement = () => {
   const [zones, setZones] = useState([])
   const [showAddModal, setShowAddModal] = useState(false)
   const [editingZone, setEditingZone] = useState(null)
+  
+  // 1. UPDATED STATE: Include latitude and longitude
   const [newZone, setNewZone] = useState({
     name: "",
     totalSlots: "",
     location: "",
     thresholdPercentage: "90",
+    latitude: "", // ADDED
+    longitude: "", // ADDED
   })
+  
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [deleteZoneId, setDeleteZoneId] = useState(null);
@@ -37,16 +42,20 @@ const ZoneManagement = () => {
   const handleAddZone = async () => {
     if (newZone.name && newZone.totalSlots) {
       try {
+        // 2. UPDATED HANDLER: Pass latitude and longitude to the API
         const response = await zoneAPI.create({
           name: newZone.name,
           totalSlots: Number.parseInt(newZone.totalSlots),
           location: newZone.location,
           thresholdPercentage: Number.parseInt(newZone.thresholdPercentage),
+          latitude: newZone.latitude, // ADDED
+          longitude: newZone.longitude, // ADDED
         })
 
         if (response.success) {
           await fetchZones()
-          setNewZone({ name: "", totalSlots: "", location: "", thresholdPercentage: "90" })
+          // Reset state including new fields
+          setNewZone({ name: "", totalSlots: "", location: "", thresholdPercentage: "90", latitude: "", longitude: "" }) 
           setShowAddModal(false)
         }
       } catch (error) {
@@ -61,11 +70,14 @@ const ZoneManagement = () => {
   const handleUpdateZone = async () => {
     if (editingZone && editingZone.name && editingZone.totalSlots) {
       try {
+        // 3. UPDATED HANDLER: Pass latitude and longitude to the API
         const response = await zoneAPI.update(editingZone.id, {
           name: editingZone.name,
           totalSlots: Number.parseInt(editingZone.totalSlots),
           location: editingZone.location,
           thresholdPercentage: Number.parseInt(editingZone.thresholdPercentage),
+          latitude: editingZone.latitude, // ADDED
+          longitude: editingZone.longitude, // ADDED
         })
 
         if (response.success) {
@@ -158,7 +170,11 @@ const ZoneManagement = () => {
   const totalCapacity = zones.reduce((acc, z) => acc + z.totalSlots, 0)
   const totalOccupied = zones.reduce((acc, z) => acc + z.occupiedSlots, 0)
   const totalAvailable = zones.reduce((acc, z) => acc + z.availableSlots, 0)
-  const avgOccupancy = zones.length > 0 ? Math.round(zones.reduce((acc, z) => acc + z.occupancyPercentage, 0) / zones.length) : 0
+  const avgOccupancy =
+  totalCapacity > 0
+    ? Math.round((totalOccupied / totalCapacity) * 100)
+    : 0;
+
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-900">
@@ -412,166 +428,301 @@ const ZoneManagement = () => {
 
       {/* Add Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="relative bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-b border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Create New Zone</h2>
-                  <p className="text-sm text-gray-500 mt-1">Add a parking zone to your system</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
+            {/* Header with Gradient */}
+            <div className="relative bg-gradient-to-br from-violet-600 via-purple-600 to-indigo-600 p-8">
+              <div className="absolute inset-0 bg-black/10"></div>
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl border border-white/30">
+                    <Plus size={28} className="text-white" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold text-white">Create New Zone</h2>
+                    <p className="text-violet-100 mt-1">Configure your parking zone details</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2.5 hover:bg-white/20 rounded-xl transition-all text-white"
                 >
-                  <X size={20} className="text-gray-500" />
+                  <X size={24} />
                 </button>
               </div>
             </div>
 
-            <div className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Zone Name *</label>
-                <input
-                  type="text"
-                  value={newZone.name}
-                  onChange={(e) => setNewZone({ ...newZone, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-                  placeholder="e.g., Zone A, North Parking"
-                />
-              </div>
+            {/* Form Content */}
+            <div className="p-8 max-h-[60vh] overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Zone Name */}
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-3">
+                    <Building2 size={16} className="text-violet-600" />
+                    Zone Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newZone.name}
+                    onChange={(e) => setNewZone({ ...newZone, name: e.target.value })}
+                    className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:bg-white transition-all"
+                    placeholder="e.g., Zone A, North Parking"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Total Capacity *</label>
-                <input
-                  type="number"
-                  value={newZone.totalSlots}
-                  onChange={(e) => setNewZone({ ...newZone, totalSlots: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-                  placeholder="e.g., 100"
-                />
-              </div>
+                {/* Total Capacity */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-3">
+                    <BarChart3 size={16} className="text-violet-600" />
+                    Total Capacity *
+                  </label>
+                  <input
+                    type="number"
+                    value={newZone.totalSlots}
+                    onChange={(e) => setNewZone({ ...newZone, totalSlots: e.target.value })}
+                    className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:bg-white transition-all"
+                    placeholder="e.g., 100"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
-                <input
-                  type="text"
-                  value={newZone.location}
-                  onChange={(e) => setNewZone({ ...newZone, location: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-                  placeholder="e.g., West Wing, Building A"
-                />
-              </div>
+                {/* Alert Threshold */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-3">
+                    <AlertCircle size={16} className="text-violet-600" />
+                    Alert Threshold (%) *
+                  </label>
+                  <input
+                    type="number"
+                    value={newZone.thresholdPercentage}
+                    onChange={(e) => setNewZone({ ...newZone, thresholdPercentage: e.target.value })}
+                    className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:bg-white transition-all"
+                    placeholder="e.g., 90"
+                    min="1"
+                    max="100"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Alert Threshold (%) *</label>
-                <input
-                  type="number"
-                  value={newZone.thresholdPercentage}
-                  onChange={(e) => setNewZone({ ...newZone, thresholdPercentage: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
-                  placeholder="e.g., 90"
-                  min="1"
-                  max="100"
-                />
+                {/* Location */}
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-3">
+                    <MapPin size={16} className="text-violet-600" />
+                    Location Description
+                  </label>
+                  <input
+                    type="text"
+                    value={newZone.location}
+                    onChange={(e) => setNewZone({ ...newZone, location: e.target.value })}
+                    className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:bg-white transition-all"
+                    placeholder="e.g., West Wing, Building A"
+                  />
+                </div>
+
+                {/* GPS Coordinates Section */}
+                <div className="md:col-span-2 pt-4 border-t-2 border-gray-100">
+                  <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <MapPin size={16} className="text-violet-600" />
+                    GPS Coordinates (Required For Map)
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Latitude */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        Latitude
+                      </label>
+                      <input
+                        type="text"
+                        value={newZone.latitude}
+                        onChange={(e) => setNewZone({ ...newZone, latitude: e.target.value })}
+                        className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:bg-white transition-all"
+                        placeholder="e.g., 29.42323281"
+                      />
+                    </div>
+
+                    {/* Longitude */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        Longitude
+                      </label>
+                      <input
+                        type="text"
+                        value={newZone.longitude}
+                        onChange={(e) => setNewZone({ ...newZone, longitude: e.target.value })}
+                        className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:border-violet-500 focus:bg-white transition-all"
+                        placeholder="e.g., 79.51406195"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-3 p-6 bg-gray-50 border-t border-gray-200">
-              <button
-                onClick={handleAddZone}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-semibold rounded-lg shadow-lg shadow-violet-500/30 transition-all"
-              >
-                Create Zone
-              </button>
+            {/* Footer Actions */}
+            <div className="flex gap-4 p-8 bg-gradient-to-br from-gray-50 to-gray-100 border-t-2 border-gray-200">
               <button
                 onClick={() => setShowAddModal(false)}
-                className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-all"
+                className="flex-1 px-6 py-3.5 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-bold rounded-xl transition-all hover:shadow-md"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleAddZone}
+                className="flex-1 px-6 py-3.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg shadow-violet-500/40 hover:shadow-violet-500/60 transition-all flex items-center justify-center gap-2"
+              >
+                <CheckCircle size={20} />
+                Create Zone
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Edit Modal */}
+{/* Edit Modal (UI matches Add Modal) */}
       {editingZone && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
-            <div className="relative bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-b border-gray-200 p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Edit Zone</h2>
-                  <p className="text-sm text-gray-500 mt-1">Update zone configuration</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all animate-in zoom-in-95 duration-300">
+            {/* Header: Cyan/Blue Gradient (Distinct from Add Modal) */}
+            <div className="relative bg-gradient-to-br from-cyan-600 via-blue-600 to-indigo-600 p-8">
+              <div className="absolute inset-0 bg-black/10"></div>
+              <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl border border-white/30">
+                    {/* Used Edit icon */}
+                    <Edit size={28} className="text-white" /> 
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold text-white">Edit Zone: {editingZone.name}</h2>
+                    <p className="text-cyan-100 mt-1">Update zone configuration and location</p>
+                  </div>
                 </div>
                 <button
                   onClick={() => setEditingZone(null)}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  className="p-2.5 hover:bg-white/20 rounded-xl transition-all text-white"
                 >
-                  <X size={20} className="text-gray-500" />
+                  <X size={24} />
                 </button>
               </div>
             </div>
 
-            <div className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Zone Name *</label>
-                <input
-                  type="text"
-                  value={editingZone.name}
-                  onChange={(e) => setEditingZone({ ...editingZone, name: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                />
-              </div>
+            {/* Form Content: Two-column grid layout */}
+            <div className="p-8 max-h-[60vh] overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Zone Name */}
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-3">
+                    <Building2 size={16} className="text-cyan-600" />
+                    Zone Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingZone.name}
+                    onChange={(e) => setEditingZone({ ...editingZone, name: e.target.value })}
+                    className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-cyan-500 focus:bg-white transition-all"
+                    placeholder="e.g., Zone A, North Parking"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Total Capacity *</label>
-                <input
-                  type="number"
-                  value={editingZone.totalSlots}
-                  onChange={(e) => setEditingZone({ ...editingZone, totalSlots: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                />
-              </div>
+                {/* Total Capacity */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-3">
+                    <BarChart3 size={16} className="text-cyan-600" />
+                    Total Capacity *
+                  </label>
+                  <input
+                    type="number"
+                    value={editingZone.totalSlots}
+                    onChange={(e) => setEditingZone({ ...editingZone, totalSlots: e.target.value })}
+                    className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-cyan-500 focus:bg-white transition-all"
+                    placeholder="e.g., 100"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Location</label>
-                <input
-                  type="text"
-                  value={editingZone.location}
-                  onChange={(e) => setEditingZone({ ...editingZone, location: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                  placeholder="e.g., West Wing, Building A"
-                />
-              </div>
+                {/* Alert Threshold */}
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-3">
+                    <AlertCircle size={16} className="text-cyan-600" />
+                    Alert Threshold (%) *
+                  </label>
+                  <input
+                    type="number"
+                    value={editingZone.thresholdPercentage}
+                    onChange={(e) => setEditingZone({ ...editingZone, thresholdPercentage: e.target.value })}
+                    className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-cyan-500 focus:bg-white transition-all"
+                    placeholder="e.g., 90"
+                    min="1"
+                    max="100"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Alert Threshold (%) *</label>
-                <input
-                  type="number"
-                  value={editingZone.thresholdPercentage}
-                  onChange={(e) => setEditingZone({ ...editingZone, thresholdPercentage: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 transition-all"
-                  placeholder="e.g., 90"
-                  min="1"
-                  max="100"
-                />
+                {/* Location Description */}
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-2 text-sm font-bold text-gray-800 mb-3">
+                    <MapPin size={16} className="text-cyan-600" />
+                    Location Description
+                  </label>
+                  <input
+                    type="text"
+                    value={editingZone.location}
+                    onChange={(e) => setEditingZone({ ...editingZone, location: e.target.value })}
+                    className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-cyan-500 focus:bg-white transition-all"
+                    placeholder="e.g., West Wing, Building A"
+                  />
+                </div>
+
+                {/* GPS Coordinates Section Header */}
+                <div className="md:col-span-2 pt-4 border-t-2 border-gray-100">
+                  <h3 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <MapPin size={16} className="text-cyan-600" />
+                    GPS Coordinates (Required for Map)
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Latitude */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        Latitude
+                      </label>
+                      <input
+                        type="text"
+                        value={editingZone.latitude || ''}
+                        onChange={(e) => setEditingZone({ ...editingZone, latitude: e.target.value })}
+                        className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-cyan-500 focus:bg-white transition-all"
+                        placeholder="e.g., 29.42323281"
+                      />
+                    </div>
+
+                    {/* Longitude */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        Longitude
+                      </label>
+                      <input
+                        type="text"
+                        value={editingZone.longitude || ''}
+                        onChange={(e) => setEditingZone({ ...editingZone, longitude: e.target.value })}
+                        className="w-full px-4 py-3.5 bg-gray-50 border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-cyan-500 focus:bg-white transition-all"
+                        placeholder="e.g., 79.51406195"
+                      />
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
-            <div className="flex gap-3 p-6 bg-gray-50 border-t border-gray-200">
-              <button
-                onClick={handleUpdateZone}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-semibold rounded-lg shadow-lg shadow-cyan-500/30 transition-all"
-              >
-                Update Zone
-              </button>
+            {/* Footer Actions: Matches new style */}
+            <div className="flex gap-4 p-8 bg-gradient-to-br from-gray-50 to-gray-100 border-t-2 border-gray-200">
               <button
                 onClick={() => setEditingZone(null)}
-                className="flex-1 px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-all"
+                className="flex-1 px-6 py-3.5 bg-white border-2 border-gray-300 hover:border-gray-400 text-gray-700 font-bold rounded-xl transition-all hover:shadow-md"
               >
                 Cancel
+              </button>
+              <button
+                onClick={handleUpdateZone}
+                className="flex-1 px-6 py-3.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg shadow-cyan-500/40 hover:shadow-cyan-500/60 transition-all flex items-center justify-center gap-2"
+              >
+                <CheckCircle size={20} />
+                Update Zone
               </button>
             </div>
           </div>
@@ -626,4 +777,4 @@ const ZoneManagement = () => {
   )
 }
 
-export default ZoneManagement
+export default ZoneManagement;

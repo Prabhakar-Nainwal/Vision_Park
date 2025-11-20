@@ -4,24 +4,22 @@ const incomingVehicleController = require('../controllers/incomingVehicleControl
 const { verifyToken } = require('../middleware/authMiddleware');
 
 // --- PUBLIC ROUTES ---
-// These routes are NOT protected by auth.
-// They can be accessed by anyone, including your detect.py script.
-
 // Get statistics
 router.get('/stats', incomingVehicleController.getStats);
 
 // Add new incoming vehicle (ANPR endpoint)
-// This is now public, so your Python script can send data.
+
 router.post('/', incomingVehicleController.addIncomingVehicle);
 
-
 // --- APPLY AUTH MIDDLEWARE ---
-// Everything *after* this line is protected and requires a valid token.
+
 router.use(verifyToken);
 
-
 // --- PROTECTED ROUTES ---
-// These routes are only for logged-in admins.
+
+// Routes for Logs & Reports
+router.get('/history', incomingVehicleController.getHistory);
+router.get('/analytics', incomingVehicleController.getAnalytics);
 
 // Get unprocessed incoming vehicles
 router.get('/unprocessed', incomingVehicleController.getUnprocessed);

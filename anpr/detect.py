@@ -12,7 +12,7 @@ MODEL_PATH = "best.pt"
 BACKEND_URL = "http://localhost:5000/api/incoming"
 CONF_THRESHOLD = 0.6
 BUFFER_DURATION = 4  # seconds
-MIN_OCCURRENCES = 3  # minimum number of times plate must appear before sending
+MIN_OCCURRENCES = 3  
 
 model = YOLO(MODEL_PATH)
 reader = easyocr.Reader(["en"], gpu=True)

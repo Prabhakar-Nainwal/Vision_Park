@@ -3,24 +3,27 @@ const db = require('../config/db');
 class ParkingZone {
   // Create new parking zone
   static async create(zoneData) {
-    const { name, totalSlots, location, thresholdPercentage } = zoneData;
+    const { name, totalSlots, location, thresholdPercentage, latitude, longitude } = zoneData;
     
     const query = `
-      INSERT INTO parking_zones (name, total_slots, location, threshold_percentage)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO parking_zones (name, total_slots, location, threshold_percentage, latitude, longitude)
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
     
     const [result] = await db.execute(query, [
       name, 
       totalSlots, 
       location || '', 
-      thresholdPercentage || 90
+      thresholdPercentage || 90,
+      latitude || 0.0, 
+      longitude || 0.0  
     ]);
     
     return { id: result.insertId, ...zoneData, occupiedSlots: 0, isActive: true };
   }
 
-  // Get all active zones
+
+  // Get all active zones (This was previously fixed)
   static async findAll() {
     const query = `
       SELECT 
@@ -31,6 +34,8 @@ class ParkingZone {
         location,
         threshold_percentage as thresholdPercentage,
         is_active as isActive,
+        latitude,
+        longitude,
         (total_slots - occupied_slots) as availableSlots,
         ROUND((occupied_slots / total_slots) * 100) as occupancyPercentage,
         created_at as createdAt,
@@ -44,7 +49,7 @@ class ParkingZone {
     return rows;
   }
 
-  // Find by ID
+  // Find by ID (This was previously fixed)
   static async findById(id) {
     const query = `
       SELECT 
@@ -55,6 +60,8 @@ class ParkingZone {
         location,
         threshold_percentage as thresholdPercentage,
         is_active as isActive,
+        latitude,
+        longitude,
         (total_slots - occupied_slots) as availableSlots,
         ROUND((occupied_slots / total_slots) * 100) as occupancyPercentage,
         created_at as createdAt,
@@ -115,15 +122,26 @@ class ParkingZone {
 
   // Update parking zone
   static async update(id, zoneData) {
-    const { name, totalSlots, location, thresholdPercentage } = zoneData;
+    // FIX 1: Add latitude and longitude to destructuring
+    const { name, totalSlots, location, thresholdPercentage, latitude, longitude } = zoneData;
     
     const query = `
+      -- FIX 2: Add columns to SET clause
       UPDATE parking_zones
-      SET name = ?, total_slots = ?, location = ?, threshold_percentage = ?
+      SET name = ?, total_slots = ?, location = ?, threshold_percentage = ?, latitude = ?, longitude = ?
       WHERE id = ?
     `;
     
-    await db.execute(query, [name, totalSlots, location || '', thresholdPercentage || 90, id]);
+    // FIX 3: Add parameters to execute array
+    await db.execute(query, [
+      name, 
+      totalSlots, 
+      location || '', 
+      thresholdPercentage || 90, 
+      latitude || 0.0, 
+      longitude || 0.0, 
+      id
+    ]);
     
     return await this.findById(id);
   }

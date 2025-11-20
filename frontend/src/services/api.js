@@ -9,7 +9,7 @@ const apiClient = axios.create({
   },
 });
 
-// ✅ Automatically attach token for authenticated requests
+// Automatically attach token for authenticated requests
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -19,9 +19,9 @@ apiClient.interceptors.request.use((config) => {
 });
 
 
-//
+
 // ---------------- VEHICLE API ----------------
-//
+
 export const vehicleAPI = {
   getAll: async (filters = {}) => {
     try {
@@ -161,6 +161,29 @@ export const incomingVehicleAPI = {
       return response.data;
     } catch (error) {
       console.error('Error fetching stats:', error);
+      throw error;
+    }
+  },
+
+
+  // Fetch full data
+  getHistory: async (filters = {}) => {
+    try {
+      const response = await apiClient.get('/incoming/history', { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching history:', error);
+      throw error;
+    }
+  },
+
+  // Fetch analytics
+  getAnalytics: async () => {
+    try {
+      const response = await apiClient.get('/incoming/analytics');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching incoming analytics:', error);
       throw error;
     }
   },

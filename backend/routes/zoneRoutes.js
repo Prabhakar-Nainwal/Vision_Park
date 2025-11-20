@@ -3,10 +3,10 @@ const router = express.Router();
 const zoneController = require('../controllers/zoneController');
 const { verifyToken } = require('../middleware/authMiddleware');
 
-// 🟢 Public route (for public dashboard view)
+// Public route (for public dashboard view)
 router.get('/', zoneController.getAllZones);
 
-// 🔒 Protected routes
+// Protected routes
 router.use(verifyToken);
 router.get('/:id', zoneController.getZoneById);
 router.post('/', zoneController.createZone);

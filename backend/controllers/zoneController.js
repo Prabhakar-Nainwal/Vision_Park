@@ -49,7 +49,8 @@ exports.getZoneById = async (req, res) => {
 // Create new parking zone
 exports.createZone = async (req, res) => {
   try {
-    const { name, totalSlots, location, thresholdPercentage } = req.body;
+    // FIX 1: Add latitude and longitude to destructuring
+    const { name, totalSlots, location, thresholdPercentage, latitude, longitude } = req.body;
     
     if (!name || !totalSlots) {
       return res.status(400).json({
@@ -66,7 +67,8 @@ exports.createZone = async (req, res) => {
       });
     }
     
-    const zone = await ParkingZone.create({ name, totalSlots, location, thresholdPercentage });
+    // FIX 2: Pass latitude and longitude to the model
+    const zone = await ParkingZone.create({ name, totalSlots, location, thresholdPercentage, latitude, longitude });
     
     const io = req.app.get('io');
     io.emit('zoneCreated', zone);
@@ -89,13 +91,17 @@ exports.createZone = async (req, res) => {
 // Update parking zone
 exports.updateZone = async (req, res) => {
   try {
-    const { name, totalSlots, location, thresholdPercentage } = req.body;
+    // FIX 3: Add latitude and longitude to destructuring
+    const { name, totalSlots, location, thresholdPercentage, latitude, longitude } = req.body;
     
+    // FIX 4: Pass latitude and longitude to the model
     const zone = await ParkingZone.update(req.params.id, {
       name,
       totalSlots,
       location,
-      thresholdPercentage
+      thresholdPercentage,
+      latitude, // Pass coordinate
+      longitude // Pass coordinate
     });
     
     if (!zone) {
